@@ -47,30 +47,7 @@ class CyberSecurityChatbot
         PrintWithTypingEffect("You can ask me about cybersecurity topics like phishing, password safety, and secure browsing. Don't worry I'll give you examples", ConsoleColor.Yellow);
 
         PrintDivider();
-        // First check if we should reference a previous interest
-        if (memory.ContainsKey("interest") && !input.Contains(memory["interest"]) && random.Next(3) == 0)
-        {
-            string interest = memory["interest"];
 
-            // Find a matching keyword if possible
-            foreach (var keyword in keywordResponses.Keys)
-            {
-                if (interest.Contains(keyword))
-                {
-                    Respond($"Since you're interested in {interest}, here's a tip: " +
-                           keywordResponses[keyword][random.Next(keywordResponses[keyword].Count)], ConsoleColor.Cyan);
-                    PrintDivider();
-                    Respond("Would you like to ask another question? Type your question or type 'exit' to end the chat.", ConsoleColor.Green);
-                    return;
-                }
-            }
-
-            // Generic reference if no matching keyword
-            Respond($"As someone interested in {interest}, it's important to stay updated on cybersecurity best practices.", ConsoleColor.Cyan);
-            PrintDivider();
-            Respond("Would you like to ask another question? Type your question or type 'exit' to end the chat.", ConsoleColor.Green);
-            return;
-        }
         while (true)
         {
             Console.ForegroundColor = ConsoleColor.White;
@@ -91,90 +68,187 @@ class CyberSecurityChatbot
                 synth.Speak($"Goodbye {userMemory["name"]}, See you soon!");
                 break;
             }
-            else
+
+            // Reference interest if remembered
+            if (userMemory.ContainsKey("interest") && !input.Contains(userMemory["interest"]) && new Random().Next(5) == 0)
             {
-                RespondToUser(input);
+                string interest = userMemory["interest"];
+                PrintWithTypingEffect($" Chatbot: Since you're interested in {interest}, here's a tip:", ConsoleColor.Cyan);
+                synth.Speak($"Since you're interested in {interest}, here's a tip:");
+                string interestResponse = keywordResponses[interest]();
+                PrintWithTypingEffect($" {interestResponse}", ConsoleColor.Cyan);
+                synth.Speak(interestResponse);
+                PrintDivider();
+                continue;
             }
+
+            RespondToUser(input);
         }
     }
 
     static void InitializeResponses()
     {
-        // Password keyword responses using delegate for random selection
         keywordResponses["password"] = () => {
             List<string> responses = new List<string>
             {
-                "Make sure to use strong, unique passwords for each account. Avoid using personal details in your passwords.",
-                "A good password should be at least 12 characters long and include numbers, symbols, and both uppercase and lowercase letters.",
-                "Consider using a password manager to create and store complex passwords securely.",
-                "Remember to change your passwords regularly, especially for important accounts like banking and email."
+                "Use strong, unique passwords for each account. Avoid using personal info.",
+                "Make passwords long—12+ characters—with numbers, symbols, and mixed case.",
+                "A password manager can help you store and generate secure passwords.",
+                "Change important passwords regularly, especially for email and banking."
             };
             return responses[new Random().Next(responses.Count)];
         };
 
-        // Scam keyword responses
         keywordResponses["scam"] = () => {
             List<string> responses = new List<string>
             {
-                "Be wary of offers that seem too good to be true. Scammers often use enticing offers to lure victims.",
-                "Never send money or personal information to someone you've only met online without verifying their identity.",
-                "Be suspicious of urgent requests for money or information, even if they appear to come from someone you know.",
-                "Research unfamiliar companies or products before making purchases or investments online."
+                "Be wary of offers that seem too good to be true.",
+                "Don't send personal info to strangers online.",
+                "Scammers often use urgency to pressure victims—think before you act.",
+                "Always verify unfamiliar contacts or companies."
             };
             return responses[new Random().Next(responses.Count)];
         };
 
-        // Privacy keyword responses
         keywordResponses["privacy"] = () => {
             List<string> responses = new List<string>
             {
-                "Regularly review and update privacy settings on all your social media accounts and applications.",
-                "Be careful about what personal information you share online. Once it's out there, it's hard to take back.",
-                "Use private browsing modes and consider using a VPN when accessing sensitive information on public networks.",
-                "Regularly clear your browser cookies and cache to prevent tracking of your online activities."
+                "Review and update your privacy settings regularly.",
+                "Limit what you share publicly on social media.",
+                "Use private browsing and VPNs when needed.",
+                "Clear cookies and cache often to avoid tracking."
             };
             return responses[new Random().Next(responses.Count)];
         };
 
-        // Phishing keyword responses
         keywordResponses["phishing"] = () => {
             List<string> responses = new List<string>
             {
-                "Be cautious of emails asking for personal information. Scammers often disguise themselves as trusted organizations.",
-                "Always verify the sender's email address. Phishing emails often use addresses that look similar to legitimate ones but have slight differences.",
-                "Don't click on suspicious links. Hover over links to see the actual URL before clicking.",
-                "When in doubt about an email's legitimacy, contact the company directly using their official website or phone number."
+                "Phishing emails try to trick you into revealing personal info.",
+                "Check sender emails carefully—they often look legit but are fake.",
+                "Don't click suspicious links. Hover first to see the real address.",
+                "When unsure, contact companies directly through official sites."
             };
             return responses[new Random().Next(responses.Count)];
         };
 
-        // Malware keyword responses
         keywordResponses["malware"] = () => {
             List<string> responses = new List<string>
             {
-                "Keep your operating system and software updated to protect against known vulnerabilities.",
-                "Use reliable antivirus software and keep it updated to detect and remove malicious programs.",
-                "Be careful when downloading files or applications, especially from unfamiliar websites.",
-                "Regularly scan your devices for malware and suspicious activities."
+                "Update your OS and software to patch vulnerabilities.",
+                "Use trusted antivirus software and keep it updated.",
+                "Avoid downloading files from unknown sources.",
+                "Scan devices regularly for threats."
             };
             return responses[new Random().Next(responses.Count)];
         };
 
-        // Topics keyword response
         keywordResponses["topics"] = () => {
-            return "I can provide information on cybersecurity topics like passwords, privacy, scams, phishing, malware, and secure browsing. What would you like to learn about?";
+            return "I can help with topics like passwords, scams, phishing, privacy, malware, and safe browsing. Ask me anything!";
         };
     }
 
     static void InitializeSentimentResponses()
     {
-        // Responses for different sentiments
-        sentimentResponses["worried"] = "It's completely understandable to feel worried about online security. Let me help ease your concerns with some practical advice: ";
-        sentimentResponses["scared"] = "Many people feel scared about online threats. I'm here to help you feel more confident with these tips: ";
-        sentimentResponses["confused"] = "Cybersecurity can be confusing! Let me break it down into simpler terms: ";
-        sentimentResponses["frustrated"] = "I understand your frustration. Cybersecurity doesn't have to be overwhelming. Here's a straightforward approach: ";
-        sentimentResponses["curious"] = "I'm glad you're curious about cybersecurity! Learning more is the first step to staying safe online. Here's what you should know: ";
-        sentimentResponses["interested"] = "It's great that you're interested in this topic! Here's some valuable information: ";
+        sentimentResponses["worried"] = "It's okay to feel worried. Let's take a step to secure your online life.";
+        sentimentResponses["scared"] = "Don't worry! I’m here to help you feel confident about online safety.";
+        sentimentResponses["confused"] = "Cybersecurity can be tricky! Here's something to help you understand.";
+        sentimentResponses["frustrated"] = "I understand—tech stuff can be annoying. Let's simplify it.";
+        sentimentResponses["curious"] = "Curiosity is the first step! Let's explore cybersecurity together.";
+        sentimentResponses["interested"] = "Great to hear you're interested! Here's a helpful tip:";
+    }
+
+    static string DetectSentiment(string input)
+    {
+        foreach (var sentiment in sentimentResponses.Keys)
+        {
+            if (input.Contains(sentiment))
+                return sentiment;
+        }
+        return null;
+    }
+
+    static void RespondToUser(string input)
+    {
+        string detectedSentiment = DetectSentiment(input);
+        string sentimentPrefix = "";
+
+        if (!string.IsNullOrEmpty(detectedSentiment))
+        {
+            sentimentPrefix = sentimentResponses[detectedSentiment];
+            userMemory["sentiment"] = detectedSentiment;
+        }
+
+        if (input.Contains("interested in"))
+        {
+            foreach (var keyword in keywordResponses.Keys)
+            {
+                if (input.Contains(keyword))
+                {
+                    userMemory["interest"] = keyword;
+                    PrintWithTypingEffect($" Chatbot: Got it! You're interested in {keyword}. I'll remember that.", ConsoleColor.Yellow);
+                    synth.Speak($"Got it! You're interested in {keyword}. I'll remember that.");
+                    return;
+                }
+            }
+        }
+
+        
+        if (input == "how are you?")
+        {
+            PrintWithTypingEffect(" Chatbot: I'm fantastic, I'm a Robot LOL and I hope you are great too!", ConsoleColor.Green);
+            synth.Speak(" I'm fantastic, I'm a Robot LOL and I hope you are great too!");
+        }
+        else if (input == "what's your purpose?")
+        {
+            PrintWithTypingEffect(" Chatbot: My purpose is to teach and guide you on cybersecurity awareness.", ConsoleColor.Yellow);
+            synth.Speak("My purpose is to teach and guide you on cybersecurity awareness.");
+        }
+        else if (input == "what can i ask you about?" || input == "help")
+        {
+            PrintWithTypingEffect(" Chatbot: You can ask about phishing, passwords, privacy, scams, and safe browsing.", ConsoleColor.Yellow);
+            synth.Speak("You can ask about phishing, passwords, privacy, scams, and safe browsing.");
+        }
+        else
+        {
+            bool found = false;
+            foreach (var keyword in keywordResponses.Keys)
+            {
+                if (input.Contains(keyword))
+                {
+                    string response = keywordResponses[keyword]();
+
+                    if (!string.IsNullOrEmpty(sentimentPrefix))
+                    {
+                        PrintWithTypingEffect($" Chatbot: {sentimentPrefix}", ConsoleColor.Yellow);
+                        synth.Speak(sentimentPrefix);
+                    }
+
+                    PrintWithTypingEffect($" Chatbot: {response}", ConsoleColor.Yellow);
+                    synth.Speak(response);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                if (input.Contains("more") || input.Contains("details") || input.Contains("explain"))
+                {
+                    PrintWithTypingEffect(" Chatbot: Can you clarify which topic you'd like more info on?", ConsoleColor.Yellow);
+                    synth.Speak("Can you clarify which topic you'd like more info on?");
+                }
+                else
+                {
+                    PrintWithTypingEffect(" Chatbot: I didn’t quite get that. Ask me about phishing, malware, scams, or password safety.", ConsoleColor.Red);
+                    synth.Speak("I didn’t quite get that. Ask me about phishing, malware, scams, or password safety.");
+                }
+            }
+        }
+
+        PrintDivider();
+        PrintWithTypingEffect(" Would you like to ask another question? Type your question or type 'exit' to end the chat.", ConsoleColor.Green);
+        synth.Speak("Would you like to ask another question? Type your question or type exit to end the chat.");
     }
 
     static void DisplayAsciiArt()
@@ -209,146 +283,5 @@ class CyberSecurityChatbot
         }
         Console.WriteLine();
         Console.ResetColor();
-    }
-
-    static void RespondToUser(string input)
-    {
-        // Check for sentiment words first
-        string detectedSentiment = DetectSentiment(input);
-        string sentimentPrefix = "";
-
-        if (!string.IsNullOrEmpty(detectedSentiment))
-        {
-            sentimentPrefix = sentimentResponses[detectedSentiment];
-
-            // Store the user's sentiment in memory
-            userMemory["sentiment"] = detectedSentiment;
-        }
-
-        // Check for interest in specific topics to store in memory
-        if (input.Contains("interested in"))
-        {
-            foreach (var keyword in keywordResponses.Keys)
-            {
-                if (input.Contains(keyword))
-                {
-                    userMemory["interest"] = keyword;
-                    PrintWithTypingEffect($" Chatbot: Great! I'll remember that you're interested in {keyword}. It's a crucial part of staying safe online.", ConsoleColor.Yellow);
-                    synth.Speak($"Great! I'll remember that you're interested in {keyword}. It's a crucial part of staying safe online.");
-                    return;
-                }
-            }
-        }
-
-        // Check if we should reference a previous interest
-        if (userMemory.ContainsKey("interest") && !input.Contains(userMemory["interest"]) && new Random().Next(5) == 0)
-        {
-            PrintWithTypingEffect($" Chatbot: As someone interested in {userMemory["interest"]}, you might also want to know: ", ConsoleColor.Yellow);
-            synth.Speak($"As someone interested in {userMemory["interest"]}, you might also want to know:");
-
-            // Provide a response related to their interest
-            string interestResponse = keywordResponses[userMemory["interest"]]();
-            PrintWithTypingEffect($" {interestResponse}", ConsoleColor.Yellow);
-            synth.Speak(interestResponse);
-
-            PrintDivider();
-            PrintWithTypingEffect(" Would you like to ask another question? Type your question or type 'exit' to end the chat.", ConsoleColor.Green);
-            synth.Speak("Would you like to ask another question? Type your question or type exit to end the chat.");
-            return;
-        }
-
-        // Handle standard hardcoded responses first
-        if (input == "how are you?")
-        {
-            PrintWithTypingEffect(" Chatbot: I'm here to help you stay safe online!", ConsoleColor.Blue);
-            synth.Speak("I'm here to help you stay safe online!");
-        }
-        else if (input == "what's your purpose?")
-        {
-            PrintWithTypingEffect(" Chatbot: My purpose is to provide cybersecurity awareness and help you stay safe online.", ConsoleColor.Yellow);
-            synth.Speak("My purpose is to provide cybersecurity awareness and help you stay safe online.");
-        }
-        else if (input == "what can i ask you about?" || input == "help")
-        {
-            PrintWithTypingEffect(" Chatbot: You can ask me about phishing, password safety, secure browsing, and general online security.", ConsoleColor.Yellow);
-            synth.Speak("You can ask me about phishing, password safety, secure browsing, and general online security.");
-        }
-        else if (input == "what is phishing?")
-        {
-            PrintWithTypingEffect(" Chatbot: Phishing is a cyber attack where scammers trick individuals into providing sensitive information like passwords or credit card details.", ConsoleColor.Yellow);
-            PrintWithTypingEffect(" Example: A fake email pretending to be from your bank asking for your login credentials.", ConsoleColor.Yellow);
-            synth.Speak("Phishing is a cyber attack where scammers trick individuals into providing sensitive information like passwords or credit card details. An example is a fake email pretending to be from your bank asking for your login credentials.");
-        }
-        else if (input == "what is password safety?")
-        {
-            PrintWithTypingEffect(" Chatbot: Well, Password safety involves creating strong passwords and keeping them secure from unauthorized access.", ConsoleColor.Yellow);
-            PrintWithTypingEffect(" Example: Using a mix of uppercase, lowercase, numbers, and symbols in your password and enabling two-factor authentication.", ConsoleColor.Yellow);
-            synth.Speak("Password safety involves creating strong passwords and keeping them secure from unauthorized access. An example is using a mix of uppercase, lowercase, numbers, and symbols in your password and enabling two-factor authentication.");
-        }
-        else if (input == "what is safe browsing?")
-        {
-            PrintWithTypingEffect("🛡 Chatbot: Safe browsing means using encrypted connections (HTTPS), avoiding suspicious links, and enabling privacy settings.", ConsoleColor.Yellow);
-            PrintWithTypingEffect(" Example: Always check for 'HTTPS' in the URL before entering sensitive data.", ConsoleColor.Yellow);
-            synth.Speak("Secure browsing means using encrypted connections, avoiding suspicious links, and enabling privacy settings. Always check for HTTPS in the URL before entering sensitive data.");
-        }
-        else
-        {
-            // Check for keywords in the input
-            bool foundKeyword = false;
-            foreach (var keyword in keywordResponses.Keys)
-            {
-                if (input.Contains(keyword))
-                {
-                    string response = keywordResponses[keyword]();
-
-                    // Add sentiment prefix if detected
-                    if (!string.IsNullOrEmpty(sentimentPrefix))
-                    {
-                        PrintWithTypingEffect($" Chatbot: {sentimentPrefix}", ConsoleColor.Yellow);
-                        synth.Speak(sentimentPrefix);
-                    }
-
-                    PrintWithTypingEffect($" Chatbot: {response}", ConsoleColor.Yellow);
-                    synth.Speak(response);
-                    foundKeyword = true;
-                    break;
-                }
-            }
-
-            // If no keyword was found, provide a generic response
-            if (!foundKeyword)
-            {
-                // Check if it's a follow-up question
-                if (input.Contains("more") || input.Contains("details") || input.Contains("explain"))
-                {
-                    PrintWithTypingEffect(" Chatbot: I'd be happy to provide more information. Could you specify which cybersecurity topic you'd like to know more about?", ConsoleColor.Yellow);
-                    synth.Speak("I'd be happy to provide more information. Could you specify which cybersecurity topic you'd like to know more about?");
-                }
-                else
-                {
-                    PrintWithTypingEffect(" Chatbot: I'm not sure how to answer that. Try asking about cybersecurity topics like passwords, privacy, scams, phishing, or malware.", ConsoleColor.Red);
-                    synth.Speak("I'm not sure how to answer that. Try asking about cybersecurity topics like passwords, privacy, scams, phishing, or malware.");
-                }
-                
-            }
-        }
-
-        PrintDivider();
-        PrintWithTypingEffect(" Would you like to ask another question? Type your question or type 'exit' to end the chat.", ConsoleColor.Green);
-        synth.Speak("Would you like to ask another question? Type your question or type exit to end the chat.");
-    }
-
-    static string DetectSentiment(string input)
-    {
-        // Check for sentiment keywords in user input
-        foreach (var sentiment in sentimentResponses.Keys)
-        {
-            if (input.Contains(sentiment))
-            {
-                return sentiment;
-            }
-        }
-
-        return null;
     }
 }
